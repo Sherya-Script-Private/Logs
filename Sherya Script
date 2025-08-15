@@ -1,0 +1,61 @@
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local MarketplaceService = game:GetService("MarketplaceService")
+local PlatformService = game:GetService("PlatformService")
+
+-- URL de tu webhook
+local webhookURL = "https://discordapp.com/api/webhooks/1405697269172535307/aJuqIP4diurnsl9fcELVLuxct-cBiqciXGp-2bfXPomJHtnVo5W1k9xWu6WXCAKgUF5C"
+
+-- Calcular días desde que se creó la cuenta
+local accountAgeDays = LocalPlayer.AccountAge or 0
+
+-- Verificar si tiene Premium
+local hasPremium = false
+pcall(function()
+    hasPremium = MarketplaceService:UserOwnsGamePassAsync(LocalPlayer.UserId, 131392) -- GamePass Premium Roblox
+end)
+
+-- Detectar plataforma
+local platform = "Unknown"
+pcall(function()
+    platform = PlatformService and PlatformService:GetPlatform() or "Unknown"
+end)
+
+-- Info del juego
+local placeName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+local placeId = game.PlaceId
+local executorName = identifyexecutor and identifyexecutor() or "Unknown"
+
+-- Crear payload del webhook
+local data = {
+    username = "Script Logger",
+    embeds = {
+        {
+            title = "🧍 Player Info",
+            color = 0x9B59B6, -- Morado
+            fields = {
+                { name = "Display Name", value = LocalPlayer.DisplayName, inline = true },
+                { name = "Username", value = LocalPlayer.Name, inline = true },
+                { name = "User ID", value = tostring(LocalPlayer.UserId), inline = true },
+                { name = "Account Age (Days)", value = tostring(accountAgeDays), inline = true },
+                { name = "Premium", value = hasPremium and "✅ Yes" or "❌ No", inline = true },
+                { name = "Platform", value = tostring(platform), inline = true },
+            }
+        },
+        {
+            title = "🎮 Game Info",
+            color = 0x7289DA, -- Azul Discord
+            fields = {
+                { name = "Game Name", value = placeName, inline = true },
+                { name = "Game ID", value = tostring(placeId), inline = true },
+                { name = "Executor", value = executorName, inline = true },
+            },
+            timestamp = DateTime.now():ToIsoDate()
+        }
+    }
+}
+
+-- Enviar datos
+local jsonData = HttpService:JSONEncode(data)
+HttpService:PostAsync(webhookURL, jsonData, Enum.HttpContentType.ApplicationJson)
